@@ -34,6 +34,7 @@ PAIRING_READ_TIMEOUT = 20.0
 LOGIN_REQUEST = "0801121a0801121073616d73756e6720534d2d4739393855180128fbff04"
 PAIRING_REQUEST = "080a120308cd08"
 LOGIN_SUCCESS_PREFIX = bytes.fromhex("08f007")
+PIN_STARTED_PREFIX = bytes.fromhex("080a120308cf08")
 PAIRING_CERT_PREFIX = bytes.fromhex("08b510")
 SUCCESS_TEXT = b"Success"
 
@@ -221,21 +222,13 @@ class ShieldProtocolClient:
     def _request_pairing(self) -> None:
         with self._thread_lock:
             self._close_pairing_session()
-            sock = self._open_socket(None)
-            sock.settimeout(READ_TIMEOUT)
-            self._send_hex(sock, PAIRING_REQUEST)
-            self._read_some(sock, READ_TIMEOUT)
-            self._pairing_session = _PairingSession(sock)
+            self._pairing_session = self._open_pairing_session()
 
     def _submit_pin(self, pin: str) -> PairingResult:
         with self._thread_lock:
             session = self._pairing_session
             if session is None:
-                sock = self._open_socket(None)
-                sock.settimeout(READ_TIMEOUT)
-                self._send_hex(sock, PAIRING_REQUEST)
-                self._read_some(sock, READ_TIMEOUT)
-                session = _PairingSession(sock)
+                session = self._open_pairing_session()
                 self._pairing_session = session
 
             try:
@@ -250,6 +243,23 @@ class ShieldProtocolClient:
                 return PairingResult(credentials=credentials)
             finally:
                 self._close_pairing_session()
+
+    def _open_pairing_session(self) -> _PairingSession:
+        sock = self._open_socket(None)
+        try:
+            sock.settimeout(READ_TIMEOUT)
+            self._send_hex(sock, LOGIN_REQUEST)
+            self._read_some(sock, READ_TIMEOUT)
+            self._send_hex(sock, PAIRING_REQUEST)
+            self._read_until(
+                sock,
+                lambda data: PIN_STARTED_PREFIX in data,
+                READ_TIMEOUT,
+            )
+            return _PairingSession(sock)
+        except Exception:
+            sock.close()
+            raise
 
     def _send_key(self, key: str) -> None:
         self._send_keys([key])
