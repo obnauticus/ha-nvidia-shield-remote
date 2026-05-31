@@ -1,0 +1,76 @@
+request_pairing:
+  name: Request pairing
+  description: Request the on-screen Shield pairing PIN.
+  fields:
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: nvidia_shield_remote
+          domain: remote
+
+submit_pin:
+  name: Submit PIN
+  description: Submit the on-screen Shield pairing PIN and store the returned client certificate.
+  fields:
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: nvidia_shield_remote
+          domain: remote
+    pin:
+      required: true
+      selector:
+        text:
+
+send_key:
+  name: Send key
+  description: Send a core Shield remote key.
+  fields:
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: nvidia_shield_remote
+          domain: remote
+    key:
+      required: true
+      selector:
+        select:
+          options:
+            - UP
+            - DOWN
+            - LEFT
+            - RIGHT
+            - SELECT
+            - BACK
+            - HOME
+            - PLAY_PAUSE
+            - VOLUME_UP
+            - VOLUME_DOWN
+            - MUTE
+            - POWER
+            - POWERON
+
+wake:
+  name: Wake
+  description: Wake the Shield using NVIDIA's non-toggle power-on command.
+  fields:
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: nvidia_shield_remote
+          domain: remote
+
+sleep:
+  name: Sleep
+  description: Put the Shield into standby using the Shield power command.
+  fields:
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: nvidia_shield_remote
+          domain: remote

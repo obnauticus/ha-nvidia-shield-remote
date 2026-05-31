@@ -1,0 +1,124 @@
+automation:
+  - alias: Projector on wakes NVIDIA Shield
+    id: projector_on_wakes_nvidia_shield
+    trigger:
+      - platform: state
+        entity_id: switch.projector
+        to: "on"
+    action:
+      - service: remote.turn_on
+        target:
+          entity_id: remote.nvidia_shield
+    mode: single
+
+  - alias: Projector off sleeps NVIDIA Shield
+    id: projector_off_sleeps_nvidia_shield
+    trigger:
+      - platform: state
+        entity_id: switch.projector
+        to: "off"
+    action:
+      - service: remote.turn_off
+        target:
+          entity_id: remote.nvidia_shield
+    mode: single
+
+script:
+  shield_remote_up:
+    alias: Shield Remote Up
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: UP
+
+  shield_remote_down:
+    alias: Shield Remote Down
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: DOWN
+
+  shield_remote_left:
+    alias: Shield Remote Left
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: LEFT
+
+  shield_remote_right:
+    alias: Shield Remote Right
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: RIGHT
+
+  shield_remote_select:
+    alias: Shield Remote Select
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: SELECT
+
+  shield_remote_back:
+    alias: Shield Remote Back
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: BACK
+
+  shield_remote_home:
+    alias: Shield Remote Home
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: HOME
+
+  shield_remote_play_pause:
+    alias: Shield Remote Play/Pause
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: PLAY_PAUSE
+
+  shield_remote_volume_up:
+    alias: Shield Remote Volume Up
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: VOLUME_UP
+
+  shield_remote_volume_down:
+    alias: Shield Remote Volume Down
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: VOLUME_DOWN
+
+  shield_remote_mute:
+    alias: Shield Remote Mute
+    sequence:
+      - service: remote.send_command
+        target:
+          entity_id: remote.nvidia_shield
+        data:
+          command: MUTE

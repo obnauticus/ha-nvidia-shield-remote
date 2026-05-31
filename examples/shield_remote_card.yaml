@@ -1,0 +1,87 @@
+type: grid
+title: NVIDIA Shield
+columns: 3
+square: false
+cards:
+  - type: button
+    icon: mdi:power
+    name: Wake
+    tap_action:
+      action: call-service
+      service: remote.turn_on
+      target:
+        entity_id: remote.nvidia_shield
+  - type: button
+    icon: mdi:home
+    name: Home
+    tap_action:
+      action: call-service
+      service: script.shield_remote_home
+  - type: button
+    icon: mdi:power-standby
+    name: Standby
+    tap_action:
+      action: call-service
+      service: remote.turn_off
+      target:
+        entity_id: remote.nvidia_shield
+  - type: button
+    icon: mdi:arrow-left
+    name: Left
+    tap_action:
+      action: call-service
+      service: script.shield_remote_left
+  - type: button
+    icon: mdi:checkbox-blank-circle-outline
+    name: Select
+    tap_action:
+      action: call-service
+      service: script.shield_remote_select
+  - type: button
+    icon: mdi:arrow-right
+    name: Right
+    tap_action:
+      action: call-service
+      service: script.shield_remote_right
+  - type: button
+    icon: mdi:arrow-up
+    name: Up
+    tap_action:
+      action: call-service
+      service: script.shield_remote_up
+  - type: button
+    icon: mdi:play-pause
+    name: Play/Pause
+    tap_action:
+      action: call-service
+      service: script.shield_remote_play_pause
+  - type: button
+    icon: mdi:arrow-down
+    name: Down
+    tap_action:
+      action: call-service
+      service: script.shield_remote_down
+  - type: button
+    icon: mdi:keyboard-backspace
+    name: Back
+    tap_action:
+      action: call-service
+      service: script.shield_remote_back
+  - type: button
+    icon: mdi:volume-minus
+    name: Volume -
+    tap_action:
+      action: call-service
+      service: script.shield_remote_volume_down
+  - type: button
+    icon: mdi:volume-mute
+    name: Mute
+    tap_action:
+      action: call-service
+      service: script.shield_remote_mute
+  - type: button
+    icon: mdi:volume-plus
+    name: Volume +
+    tap_action:
+      action: call-service
+      service: script.shield_remote_volume_up
