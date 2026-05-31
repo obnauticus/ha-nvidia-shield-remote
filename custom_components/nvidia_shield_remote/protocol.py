@@ -30,6 +30,7 @@ from cryptography.x509.oid import NameOID
 CONNECT_TIMEOUT = 5.0
 READ_TIMEOUT = 8.0
 PAIRING_READ_TIMEOUT = 20.0
+COMMAND_DRAIN_TIMEOUT = 0.03
 
 LOGIN_REQUEST = "0801121a0801121073616d73756e6720534d2d4739393855180128fbff04"
 PAIRING_REQUEST = "080a120308cd08"
@@ -154,6 +155,7 @@ class ShieldProtocolClient:
         self._lock = asyncio.Lock()
         self._thread_lock = threading.RLock()
         self._pairing_session: _PairingSession | None = None
+        self._command_socket: ssl.SSLSocket | None = None
 
     @property
     def paired(self) -> bool:
@@ -162,7 +164,9 @@ class ShieldProtocolClient:
 
     def update_credentials(self, credentials: ShieldCredentials) -> None:
         """Update credentials after a successful pairing flow."""
-        self.credentials = credentials
+        with self._thread_lock:
+            self.credentials = credentials
+            self._close_command_socket()
 
     async def async_ping(self) -> bool:
         """Check whether the Shield remote port accepts TCP connections."""
@@ -204,9 +208,10 @@ class ShieldProtocolClient:
         self.assumed_on = None
 
     def close(self) -> None:
-        """Close any pending pairing state."""
+        """Close any pending protocol state."""
         with self._thread_lock:
             self._close_pairing_session()
+            self._close_command_socket()
 
     def _ping(self) -> bool:
         try:
@@ -265,15 +270,52 @@ class ShieldProtocolClient:
         self._send_keys([key])
 
     def _send_keys(self, keys: list[str]) -> None:
+        with self._thread_lock:
+            if self.credentials is None:
+                raise ShieldNotPairedError("Shield has not been paired")
+
+            payloads: list[str] = []
+            normalized_keys: list[str] = []
+            for key in keys:
+                normalized = key.upper().replace("-", "_").replace(" ", "_")
+                if normalized not in KEY_PAYLOADS:
+                    raise ShieldProtocolError(f"Unsupported Shield key: {key}")
+                normalized_keys.append(normalized)
+                payloads.extend(KEY_PAYLOADS[normalized])
+
+            self._send_command_payloads(payloads)
+            if any(key in {"POWER", "POWERON", "WAKE"} for key in normalized_keys):
+                self._close_command_socket()
+
+    def _send_command_payloads(self, payloads: list[str]) -> None:
+        last_error: BaseException | None = None
+        for attempt in range(2):
+            try:
+                sock = self._get_command_socket()
+                for payload in payloads:
+                    self._send_hex(sock, payload)
+                if not self._drain_command_replies(sock):
+                    self._close_command_socket()
+                self.last_available = True
+                return
+            except (
+                OSError,
+                ssl.SSLError,
+                ShieldConnectionError,
+                ShieldProtocolError,
+            ) as err:
+                last_error = err
+                self.last_available = False
+                self._close_command_socket()
+                if attempt == 0:
+                    continue
+        raise ShieldConnectionError("Unable to send Shield command") from last_error
+
+    def _get_command_socket(self) -> ssl.SSLSocket:
+        if self._command_socket is not None:
+            return self._command_socket
         if self.credentials is None:
             raise ShieldNotPairedError("Shield has not been paired")
-
-        payloads: list[str] = []
-        for key in keys:
-            normalized = key.upper().replace("-", "_").replace(" ", "_")
-            if normalized not in KEY_PAYLOADS:
-                raise ShieldProtocolError(f"Unsupported Shield key: {key}")
-            payloads.extend(KEY_PAYLOADS[normalized])
 
         sock = self._open_socket(self.credentials)
         try:
@@ -284,12 +326,12 @@ class ShieldProtocolClient:
                 lambda data: LOGIN_SUCCESS_PREFIX in data,
                 READ_TIMEOUT,
             )
-            for payload in payloads:
-                self._send_hex(sock, payload)
-                self._read_some(sock, 0.2)
-            self.last_available = True
-        finally:
+        except Exception:
             sock.close()
+            raise
+
+        self._command_socket = sock
+        return sock
 
     def _open_socket(self, credentials: ShieldCredentials | None) -> ssl.SSLSocket:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -335,6 +377,15 @@ class ShieldProtocolClient:
             session.close()
             self._pairing_session = None
 
+    def _close_command_socket(self) -> None:
+        sock = self._command_socket
+        self._command_socket = None
+        if sock is not None:
+            try:
+                sock.close()
+            except OSError:
+                pass
+
     @staticmethod
     def _send_hex(sock: ssl.SSLSocket, payload: str) -> None:
         sock.sendall(bytes.fromhex(payload))
@@ -348,6 +399,21 @@ class ShieldProtocolClient:
                 return sock.recv(8192)
             except socket.timeout:
                 return b""
+        finally:
+            sock.settimeout(old_timeout)
+
+    @staticmethod
+    def _drain_command_replies(sock: ssl.SSLSocket) -> bool:
+        old_timeout = sock.gettimeout()
+        sock.settimeout(COMMAND_DRAIN_TIMEOUT)
+        try:
+            while True:
+                try:
+                    chunk = sock.recv(8192)
+                except socket.timeout:
+                    return True
+                if not chunk:
+                    return False
         finally:
             sock.settimeout(old_timeout)
 
