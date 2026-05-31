@@ -11,7 +11,7 @@ where the Shield should wake from standby without Wake-on-LAN.
 - mDNS discovery for Shield devices exposing `_nv_shield_remote._tcp.local.`
 - Manual host and port setup
 - Home Assistant `remote` entity
-- First-time PIN pairing through Home Assistant services
+- First-time PIN pairing in the Home Assistant setup flow
 - Wake using NVIDIA's non-toggle power-on command
 - Core remote buttons: d-pad, select, back, home, play/pause, volume, mute
 
@@ -25,23 +25,9 @@ where the Shield should wake from standby without Wake-on-LAN.
 
 ## Pairing
 
-After adding the integration, request a Shield PIN while watching the display:
-
-```yaml
-service: nvidia_shield_remote.request_pairing
-target:
-  entity_id: remote.nvidia_shield
-```
-
-Then submit the on-screen PIN:
-
-```yaml
-service: nvidia_shield_remote.submit_pin
-target:
-  entity_id: remote.nvidia_shield
-data:
-  pin: "123456"
-```
+Pairing happens while adding the integration. Keep the Shield display visible,
+start the discovered or manual setup flow, and enter the PIN that appears on
+screen.
 
 The generated client certificate and key are stored in Home Assistant's config
 entry storage. Do not copy them into YAML or publish them.

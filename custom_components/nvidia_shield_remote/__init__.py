@@ -11,7 +11,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
@@ -87,6 +87,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             cert_pem=entry.data[CONF_CLIENT_CERT],
             key_pem=entry.data[CONF_CLIENT_KEY],
         )
+    else:
+        raise ConfigEntryAuthFailed("NVIDIA Shield is not paired")
 
     client = ShieldProtocolClient(
         entry.data[CONF_HOST],

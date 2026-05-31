@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "NVIDIA Shield Remote",
-        "description": "Configure a Shield device that exposes NVIDIA's remote service on TCP port 8987.",
+        "description": "Configure and pair a Shield device that exposes NVIDIA's remote service on TCP port 8987.",
         "data": {
           "name": "Name",
           "host": "Host",
@@ -13,14 +13,38 @@
       "zeroconf_confirm": {
         "title": "NVIDIA Shield Remote",
         "description": "Set up {name} at {host}:{port}?"
+      },
+      "pin": {
+        "title": "Pair NVIDIA Shield",
+        "description": "A pairing PIN should be visible on {name}. Enter it to finish setup.",
+        "data": {
+          "pin": "PIN"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure NVIDIA Shield Remote",
+        "description": "Update the Shield connection details and pair again.",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "port": "Port"
+        }
+      },
+      "reauth": {
+        "title": "Pair NVIDIA Shield",
+        "description": "Request a new pairing PIN for {name}."
       }
     },
     "error": {
       "invalid_port": "Port must be between 1 and 65535",
+      "cannot_connect": "Unable to connect to the Shield remote service",
+      "invalid_pin": "The PIN was not accepted by the Shield",
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "This Shield is already configured"
+      "already_configured": "This Shield is already configured",
+      "reauth_successful": "NVIDIA Shield pairing was updated",
+      "reconfigure_successful": "NVIDIA Shield Remote was reconfigured"
     }
   }
 }
