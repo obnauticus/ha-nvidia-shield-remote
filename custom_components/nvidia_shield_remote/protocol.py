@@ -96,6 +96,10 @@ KEY_PAYLOADS: dict[str, tuple[str, ...]] = {
     "MUTE": ("08f007120c08031208080110021a020102",),
 }
 
+APP_COMMANDS: dict[str, str] = {
+    "PLEX": "com.plexapp.android",
+}
+
 
 class ShieldProtocolError(Exception):
     """Base class for Shield protocol errors."""
@@ -277,11 +281,19 @@ class ShieldProtocolClient:
             payloads: list[str] = []
             normalized_keys: list[str] = []
             for key in keys:
-                normalized = key.upper().replace("-", "_").replace(" ", "_")
-                if normalized not in KEY_PAYLOADS:
+                raw_key = key.strip()
+                normalized = raw_key.upper().replace("-", "_").replace(" ", "_")
+                if normalized in KEY_PAYLOADS:
+                    normalized_keys.append(normalized)
+                    payloads.extend(KEY_PAYLOADS[normalized])
+                elif normalized in APP_COMMANDS:
+                    normalized_keys.append(normalized)
+                    payloads.append(_build_app_launch_payload(APP_COMMANDS[normalized]))
+                elif raw_key.upper().startswith("APP:"):
+                    normalized_keys.append("APP")
+                    payloads.append(_build_app_launch_payload(raw_key[4:]))
+                else:
                     raise ShieldProtocolError(f"Unsupported Shield key: {key}")
-                normalized_keys.append(normalized)
-                payloads.extend(KEY_PAYLOADS[normalized])
 
             self._send_command_payloads(payloads)
             if any(key in {"POWER", "POWERON", "WAKE"} for key in normalized_keys):
@@ -454,6 +466,40 @@ def _build_pin_payload(pin: str) -> str:
         + encoded_pin
         + "121036646564646461326639366635646261"
     )
+
+
+def _build_app_launch_payload(package_name: str) -> str:
+    package = package_name.strip()
+    if not package:
+        raise ShieldProtocolError("App package cannot be empty")
+    try:
+        package_bytes = package.encode("ascii")
+    except UnicodeEncodeError as err:
+        raise ShieldProtocolError("App package must be ASCII") from err
+
+    return (
+        "08f10712"
+        + _encode_varint(len(package_bytes) + 6).hex()
+        + "080212"
+        + _encode_varint(len(package_bytes) + 2).hex()
+        + "0a"
+        + _encode_varint(len(package_bytes)).hex()
+        + package_bytes.hex()
+    )
+
+
+def _encode_varint(value: int) -> bytes:
+    if value < 0:
+        raise ShieldProtocolError("Varint value cannot be negative")
+    encoded = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        if value:
+            encoded.append(byte | 0x80)
+        else:
+            encoded.append(byte)
+            return bytes(encoded)
 
 
 def _extract_pairing_credentials(payload: bytes) -> ShieldCredentials:

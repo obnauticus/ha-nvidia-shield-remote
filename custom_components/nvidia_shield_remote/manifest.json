@@ -9,6 +9,6 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/obnauticus/ha-nvidia-shield-remote/issues",
   "requirements": [],
-  "version": "0.1.4",
+  "version": "0.1.5",
   "zeroconf": ["_nv_shield_remote._tcp.local."]
 }

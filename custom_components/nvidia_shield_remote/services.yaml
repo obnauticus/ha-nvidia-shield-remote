@@ -50,6 +50,7 @@ send_key:
             - VOLUME_UP
             - VOLUME_DOWN
             - MUTE
+            - PLEX
             - POWER
             - POWERON
 
