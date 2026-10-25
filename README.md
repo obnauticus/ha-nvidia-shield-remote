@@ -78,3 +78,26 @@ entity ID.
 - Standby currently uses the Shield power command.
 - The first release focuses on core remote control; app inventory and keyboard
   entry are not implemented yet.
+
+## Compatibility
+
+Home Assistant 2025.1 and later are supported. Check integration, configuration
+flow, and remote-platform imports against a real Home Assistant runtime with:
+
+```sh
+docker run --rm \
+  --volume "$PWD:/integration:ro" \
+  --entrypoint python3 \
+  ghcr.io/home-assistant/home-assistant:stable \
+  /integration/scripts/check_compatibility.py
+```
+
+Replace `stable` with a specific Home Assistant version to check that release.
+This check does not connect to the Shield or send remote commands.
+
+Version 0.1.6 fixes setup and discovery after upgrading Home Assistant. The
+discovery data type is imported only for type checking, from its current
+`homeassistant.helpers.service_info.zeroconf` location, so setup no longer
+depends on the removed runtime re-export. Existing pairing credentials and
+entity IDs are preserved. Update through HACS and restart Home Assistant to
+load the fix.
