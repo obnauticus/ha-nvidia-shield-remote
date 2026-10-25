@@ -10,6 +10,10 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+# Initialize Home Assistant's validation library before custom integrations,
+# matching the application loader on releases that provide probatio.
+importlib.import_module("homeassistant")
+
 for suffix in ("", ".config_flow", ".remote"):
     importlib.import_module("custom_components.nvidia_shield_remote" + suffix)
 
